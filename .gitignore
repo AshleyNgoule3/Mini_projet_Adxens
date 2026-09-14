@@ -19,6 +19,9 @@ target/
 # OS
 .DS_Store
 
-# Frontend (anticipation)
+# Frontend
 node_modules/
 dist/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
