@@ -10,9 +10,16 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+    # Explicite volontairement : le profil par defaut ne charge jamais les
+    # donnees de demonstration de db/seed (voir application-local.yml).
+    locations: classpath:db/migration
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,prometheus
+
+app:
+  cors:
+    origin: ${APP_CORS_ORIGIN:http://localhost:5173}

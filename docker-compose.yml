@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gestion_employes}
+      POSTGRES_USER: ${POSTGRES_USER:-gestion_employes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gestion_employes} -d ${POSTGRES_DB:-gestion_employes}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - gestion-employes-net
+
+  backend:
+    # Pas de Dockerfile applicatif a ce stade (hors perimetre) : image Maven
+    # generique, code monte en volume, demarrage en mode dev.
+    image: maven:3.9.9-eclipse-temurin-21
+    restart: unless-stopped
+    working_dir: /app
+    command: ["./mvnw", "spring-boot:run"]
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-gestion_employes}
+      DB_USERNAME: ${POSTGRES_USER:-gestion_employes}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      APP_CORS_ORIGIN: ${APP_CORS_ORIGIN:-http://localhost:5173}
+    volumes:
+      - ./backend:/app
+      - maven_repo:/root/.m2
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gestion-employes-net
+
+  # Le service "frontend" sera ajoute ici dans une etape ulterieure, sur le
+  # meme reseau "gestion-employes-net" (voir README).
+
+volumes:
+  pgdata:
+  maven_repo:
+
+networks:
+  gestion-employes-net:
+    name: gestion-employes-net
