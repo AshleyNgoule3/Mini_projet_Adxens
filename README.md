@@ -6,22 +6,21 @@ Mini-projet dont la finalite est de mettre en place une chaine de
 deploiement DevSecOps complete (Docker, GitHub Actions, k3s, Argo CD,
 observabilite) autour d'une application simple de gestion des employes
 (CRUD, sans authentification ni gestion d'utilisateurs). Cette etape couvre
-le backend metier complet. Le frontend, les images de production, les
-manifestes Kubernetes et les workflows CI feront l'objet d'etapes
+le backend metier complet et le frontend complet. Les images de production,
+les manifestes Kubernetes et les workflows CI feront l'objet d'etapes
 ulterieures.
 
 ## Stack
 
-- Java 21
-- Spring Boot 3.x / Maven
-- PostgreSQL 16
-- Flyway (migrations)
+- Backend : Java 21, Spring Boot 3.x / Maven, PostgreSQL 16, Flyway
+- Frontend : React + Vite + TypeScript, Node.js 20
 
 ## Prerequis
 
 - Docker et Docker Compose (v2), pour le demarrage local complet
 - JDK 21 et une instance PostgreSQL 16, pour une execution du backend hors
   conteneur
+- Node.js 20, pour une execution du frontend hors conteneur
 
 ## Demarrage local (docker compose)
 
@@ -32,24 +31,53 @@ docker compose up
 
 - PostgreSQL demarre avec un volume nomme (`pgdata`) et un healthcheck
   (`pg_isready`) ; le backend attend que la base soit prete avant de
-  demarrer.
+  demarrer, le frontend attend le demarrage du backend.
 - Le backend tourne avec le profil `local` (`SPRING_PROFILES_ACTIVE=local`
   dans `.env.example`), qui charge en plus le jeu de donnees de demonstration
   (voir "Migrations Flyway" ci-dessous).
-- API disponible sur `http://localhost:8080/api`.
+- Interface disponible sur `http://localhost:5173`. Le serveur de
+  developpement Vite proxifie `/api` vers le service `backend` du reseau
+  Docker (voir "Frontend / acces a l'API" ci-dessous) : aucun appel direct au
+  port 8080 depuis le navigateur.
+- API accessible directement sur `http://localhost:8080/api` (utile pour des
+  appels `curl` de verification).
 - Aucun Dockerfile applicatif n'est utilise a ce stade (hors perimetre) :
-  le backend tourne dans un conteneur `maven` generique avec le code source
-  monte en volume et `./mvnw spring-boot:run`.
-- Le service `frontend` sera ajoute dans `docker-compose.yml` dans une
-  etape ulterieure, sur le meme reseau Docker (`gestion-employes-net`).
+  backend et frontend tournent dans des conteneurs generiques (`maven`,
+  `node`) avec le code source monte en volume.
 
 ## Demarrage local (sans Docker)
 
 ```bash
+# backend, necessite une instance PostgreSQL 16 deja accessible (cf. DB_*)
 cd backend
-# necessite une instance PostgreSQL 16 deja accessible, cf. variables DB_*
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
+```bash
+# frontend, dans un autre terminal
+cd frontend
+npm install
+npm run dev
+```
+
+## Frontend / acces a l'API
+
+Le frontend appelle l'API sur le chemin relatif `/api` (meme origine que la
+page), jamais une URL codee en dur :
+
+- **En developpement** (`npm run dev`, avec ou sans Docker), le serveur Vite
+  proxifie `/api` vers le backend (`frontend/vite.config.ts`). La cible du
+  proxy est lue depuis `API_PROXY_TARGET` (variable interne au serveur de
+  dev, jamais exposee au bundle client) : `http://backend:8080` dans
+  `docker-compose.yml`, ou `http://localhost:8080` par defaut hors Docker.
+- **`VITE_API_URL`** (voir `.env.example`) reste disponible pour surcharger
+  ponctuellement cette base par une URL absolue (ex. pointer vers une autre
+  API), mais n'est pas necessaire au fonctionnement normal — c'est
+  volontaire : une URL d'API figee au build empecherait de promouvoir la
+  meme image entre environnements.
+- `APP_CORS_ORIGIN` cote backend reste utile pour un appel hors proxy (ex.
+  avec `VITE_API_URL` renseignee), mais le parcours nominal ne CORS pas
+  puisqu'il reste sur la meme origine.
 
 ## Migrations Flyway
 
@@ -77,7 +105,8 @@ Voir `.env.example` pour les valeurs d'illustration. Recapitulatif :
 | `DB_USERNAME` | Utilisateur DB cote backend |
 | `DB_PASSWORD` | Mot de passe DB cote backend |
 | `SPRING_PROFILES_ACTIVE` | Profil Spring actif (`local` charge les donnees de demonstration) |
-| `APP_CORS_ORIGIN` | Seule origine autorisee en CORS sur `/api/**` |
+| `APP_CORS_ORIGIN` | Seule origine autorisee en CORS sur `/api/**` (appels hors proxy) |
+| `VITE_API_URL` | Optionnel : surcharge ponctuelle de la base d'API frontend (sinon `/api` relatif) |
 
 ## Endpoints
 

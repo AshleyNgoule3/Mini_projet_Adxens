@@ -42,8 +42,29 @@ services:
     networks:
       - gestion-employes-net
 
-  # Le service "frontend" sera ajoute ici dans une etape ulterieure, sur le
-  # meme reseau "gestion-employes-net" (voir README).
+  frontend:
+    # Pas de Dockerfile applicatif a ce stade (hors perimetre) : image Node
+    # generique, code monte en volume, serveur de dev Vite.
+    image: node:20-alpine
+    restart: unless-stopped
+    working_dir: /app
+    # --host 0.0.0.0 : le serveur de dev Vite n'ecoute que la boucle locale
+    # par defaut, ce qui le rendrait injoignable depuis l'hote une fois dans
+    # le conteneur.
+    command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
+    environment:
+      # Cible du proxy /api du serveur de dev (vite.config.ts) : le nom du
+      # service backend sur le reseau Docker, jamais localhost depuis ce
+      # conteneur. Jamais prefixe VITE_, donc jamais expose au bundle client.
+      API_PROXY_TARGET: http://backend:8080
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - gestion-employes-net
 
 volumes:
   pgdata:
