@@ -1,6 +1,12 @@
 spring:
   jpa:
     show-sql: true
+  flyway:
+    # Ajoute le jeu de donnees de demonstration (db/seed/R__seed_data.sql),
+    # rejoue a chaque changement de checksum. Uniquement pour le dev local :
+    # un environnement de production (VPS) tourne sans le profil "local" et
+    # ne charge donc jamais ce dossier.
+    locations: classpath:db/migration,classpath:db/seed
 
 logging:
   level:
