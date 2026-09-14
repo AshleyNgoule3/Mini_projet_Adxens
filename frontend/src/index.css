@@ -1,0 +1,353 @@
+:root {
+  --color-bg: #f6f7fb;
+  --color-surface: #ffffff;
+  --color-border: #e1e4ea;
+  --color-text: #1f2430;
+  --color-text-muted: #636b7a;
+
+  --color-primary: #3452e0;
+  --color-primary-hover: #2a41b8;
+  --color-primary-contrast: #ffffff;
+
+  --color-danger: #d6455a;
+  --color-danger-hover: #b6394b;
+  --color-danger-contrast: #ffffff;
+
+  --color-active-bg: #e2f5ea;
+  --color-active-text: #1c7a45;
+  --color-inactive-bg: #eceef3;
+  --color-inactive-text: #5b6472;
+
+  --color-error-bg: #fdecee;
+  --color-error-text: #b6394b;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-md: 0 10px 30px rgba(20, 25, 40, 0.14);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Layout */
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.page__header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Inputs, selects, buttons */
+
+input,
+select,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input,
+select {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--color-text-muted);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.button--primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.button--primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.button--danger {
+  border-color: var(--color-danger);
+  background: var(--color-surface);
+  color: var(--color-danger);
+}
+
+.button--danger:hover {
+  background: var(--color-danger);
+  color: var(--color-danger-contrast);
+}
+
+/* Toolbar */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.toolbar__search {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.toolbar__create {
+  margin-left: auto;
+}
+
+/* Table */
+
+.table-scroll {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.employee-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.employee-table th,
+.employee-table td {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.employee-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.employee-table tbody tr:hover {
+  background: var(--color-bg);
+}
+
+.sort-button {
+  border: none;
+  background: none;
+  padding: 0;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.sort-button:hover {
+  color: var(--color-text);
+  border: none;
+}
+
+.employee-table__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Status badge */
+
+.status-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-badge--active {
+  background: var(--color-active-bg);
+  color: var(--color-active-text);
+}
+
+.status-badge--inactive {
+  background: var(--color-inactive-bg);
+  color: var(--color-inactive-text);
+}
+
+/* Pagination */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.pagination__status {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Status messages */
+
+.status-message {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.status-message--error {
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}
+
+.status-message--empty {
+  border: 1px dashed var(--color-border);
+}
+
+/* Dialog */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 25, 40, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 10;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - var(--space-6));
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dialog--small {
+  max-width: 400px;
+}
+
+.dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dialog label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.form-error {
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin: 0;
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+  .page {
+    padding: var(--space-4);
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar__create {
+    margin-left: 0;
+  }
+
+  .dialog {
+    max-width: none;
+  }
+}
