@@ -7,7 +7,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-gestion_employes}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
     ports:
-      - "5432:5432"
+      # Publie sur un port decale pour ne pas heurter un PostgreSQL local.
+      # A supprimer sur le VPS : la base n'a pas a etre joignable de l'exterieur.
+      - "${DB_HOST_PORT:-55432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -19,23 +21,25 @@ services:
       - gestion-employes-net
 
   backend:
-    # Pas de Dockerfile applicatif a ce stade (hors perimetre) : image Maven
-    # generique, code monte en volume, demarrage en mode dev.
-    image: maven:3.9.9-eclipse-temurin-21
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: gestion-employes-backend:local
     restart: unless-stopped
-    working_dir: /app
-    command: ["./mvnw", "spring-boot:run"]
     environment:
+      # Profil local : charge le jeu de donnees de demonstration.
+      # Laisser vide pour reproduire le comportement d'un deploiement reel.
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      # Nom de service et port interne : inchanges par le remappage ci-dessus.
       DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-gestion_employes}
       DB_USERNAME: ${POSTGRES_USER:-gestion_employes}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      APP_CORS_ORIGIN: ${APP_CORS_ORIGIN:-http://localhost:5173}
-    volumes:
-      - ./backend:/app
-      - maven_repo:/root/.m2
+      # Inutilise dans le parcours nominal : le frontend passe par Nginx,
+      # donc sur la meme origine. Conserve pour un appel direct hors proxy.
+      APP_CORS_ORIGIN: ${APP_CORS_ORIGIN:-http://localhost:8090}
     ports:
-      - "8080:8080"
+      # Utile pour les verifications curl. Supprimable sans casser l'appli.
+      - "${BACKEND_HOST_PORT:-18080}:8080"
     depends_on:
       db:
         condition: service_healthy
@@ -43,32 +47,21 @@ services:
       - gestion-employes-net
 
   frontend:
-    # Pas de Dockerfile applicatif a ce stade (hors perimetre) : image Node
-    # generique, code monte en volume, serveur de dev Vite.
-    image: node:20-alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: gestion-employes-frontend:local
     restart: unless-stopped
-    working_dir: /app
-    # --host 0.0.0.0 : le serveur de dev Vite n'ecoute que la boucle locale
-    # par defaut, ce qui le rendrait injoignable depuis l'hote une fois dans
-    # le conteneur.
-    command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
-    environment:
-      # Cible du proxy /api du serveur de dev (vite.config.ts) : le nom du
-      # service backend sur le reseau Docker, jamais localhost depuis ce
-      # conteneur. Jamais prefixe VITE_, donc jamais expose au bundle client.
-      API_PROXY_TARGET: http://backend:8080
-    volumes:
-      - ./frontend:/app
     ports:
-      - "5173:5173"
+      - "${FRONTEND_HOST_PORT:-8090}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - gestion-employes-net
 
 volumes:
   pgdata:
-  maven_repo:
 
 networks:
   gestion-employes-net:
