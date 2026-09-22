@@ -6,8 +6,10 @@ import com.adxens.gestionemployes.dto.PageResponse;
 import com.adxens.gestionemployes.entity.Employee;
 import com.adxens.gestionemployes.entity.EmployeeStatus;
 import com.adxens.gestionemployes.exception.BadRequestException;
+import com.adxens.gestionemployes.exception.FeatureDisabledException;
 import com.adxens.gestionemployes.mapper.EmployeeMapper;
 import com.adxens.gestionemployes.service.EmployeeService;
+import com.adxens.gestionemployes.service.FeatureService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -41,10 +43,14 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
     private final EmployeeMapper employeeMapper;
+    private final FeatureService featureService;
 
-    public EmployeeController(EmployeeService employeeService, EmployeeMapper employeeMapper) {
+    public EmployeeController(EmployeeService employeeService,
+                              EmployeeMapper employeeMapper,
+                              FeatureService featureService) {
         this.employeeService = employeeService;
         this.employeeMapper = employeeMapper;
+        this.featureService = featureService;
     }
 
     @GetMapping
@@ -76,6 +82,7 @@ public class EmployeeController {
 
     @PutMapping("/{id}")
     public EmployeeResponse update(@PathVariable Integer id, @Valid @RequestBody EmployeeRequest request) {
+        verifierEcritureAutorisee();
         Employee updated = employeeService.update(id, employeeMapper.toEntity(request));
         return employeeMapper.toResponse(updated);
     }
@@ -83,7 +90,20 @@ public class EmployeeController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Integer id) {
+        verifierEcritureAutorisee();
         employeeService.delete(id);
+    }
+
+    /**
+     * Masquer un bouton dans l'interface ne protege rien : n'importe qui peut
+     * appeler l'API directement avec curl. Le flag doit donc etre verifie ici
+     * aussi, faute de quoi il ne serait qu'un effet d'affichage.
+     */
+    private void verifierEcritureAutorisee() {
+        if (!featureService.isEnabled(FeatureService.ACTIONS_ECRITURE)) {
+            throw new FeatureDisabledException(
+                    "Les actions de modification et de suppression sont desactivees.");
+        }
     }
 
     private Sort parseSort(String sort) {

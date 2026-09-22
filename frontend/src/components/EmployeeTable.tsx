@@ -22,6 +22,8 @@ interface EmployeeTableProps {
   onSort: (field: SortField) => void
   onEdit: (employee: Employee) => void
   onDelete: (employee: Employee) => void
+  /** Pilote par le feature flag employes-actions-ecriture. */
+  ecritureActivee: boolean
 }
 
 export function EmployeeTable({
@@ -31,6 +33,7 @@ export function EmployeeTable({
   onSort,
   onEdit,
   onDelete,
+  ecritureActivee,
 }: EmployeeTableProps) {
   return (
     <div className="table-scroll">
@@ -62,12 +65,16 @@ export function EmployeeTable({
               <td>{formatHireDate(employee.hireDate)}</td>
               <td><StatusBadge status={employee.status} /></td>
               <td className="employee-table__actions">
-                <button type="button" onClick={() => onEdit(employee)}>
-                  Modifier
-                </button>
-                <button type="button" className="button--danger" onClick={() => onDelete(employee)}>
-                  Supprimer
-                </button>
+                {ecritureActivee && (
+                  <>
+                    <button type="button" onClick={() => onEdit(employee)}>
+                      Modifier
+                    </button>
+                    <button type="button" className="button--danger" onClick={() => onDelete(employee)}>
+                      Supprimer
+                    </button>
+                  </>
+                )}
               </td>
             </tr>
           ))}
