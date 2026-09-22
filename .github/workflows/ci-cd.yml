@@ -100,6 +100,10 @@ jobs:
     needs: [backend, frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Expose le tag calcule ci-dessous au job "gitops", qui en a besoin
+    # pour epingler la version dans le depot de deploiement.
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     env:
       # A adapter aux noms reels de tes depots Docker Hub.
       IMAGE_BACKEND: ${{ secrets.DOCKERHUB_USERNAME }}/gestion-employes-backend
@@ -152,4 +156,65 @@ jobs:
             echo ""
             echo "- \`${IMAGE_BACKEND}:${{ steps.version.outputs.tag }}\`"
             echo "- \`${IMAGE_FRONTEND}:${{ steps.version.outputs.tag }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------
+  # Job 4 : ferme la boucle GitOps.
+  #
+  # Argo CD ne surveille pas Docker Hub, il surveille le depot platform.
+  # Republier une image ne declenche donc AUCUN deploiement : il faut
+  # epingler le nouveau tag dans le depot de deploiement et commiter.
+  # C'est ce commit qui fait foi sur ce qui tourne en production, et qui
+  # permet un retour arriere par simple git revert.
+  # ---------------------------------------------------------------
+  gitops:
+    name: Deploiement (mise a jour du depot platform)
+    needs: images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperation du depot de deploiement
+        uses: actions/checkout@v4
+        with:
+          repository: AshleyNgoule3/platform
+          # Deploy key du depot platform, AVEC acces en ecriture.
+          # A ne pas confondre avec argocd_platform, qui reste en lecture seule.
+          ssh-key: ${{ secrets.PLATFORM_DEPLOY_KEY }}
+          ref: main
+
+      - name: Epingler le nouveau tag des images
+        env:
+          TAG: ${{ needs.images.outputs.tag }}
+        working-directory: gitops/manifests/gestion-employes/overlays/prod
+        run: |
+          # Les deux images partagent le meme tag : une substitution globale suffit.
+          sed -i "s|newTag: .*|newTag: ${TAG}|g" kustomization.yaml
+          echo "--- kustomization.yaml apres mise a jour ---"
+          cat kustomization.yaml
+
+      - name: Commiter et pousser
+        env:
+          TAG: ${{ needs.images.outputs.tag }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Sortie sans erreur si le tag etait deja a jour (re-execution du
+          # workflow sur le meme commit), sinon le job echouerait pour rien.
+          if git diff --quiet; then
+            echo "Tag deja a jour, rien a pousser."
+            exit 0
+          fi
+          git commit -am "deploiement: gestion-employes ${TAG}"
+          git push origin main
+
+      - name: Recapitulatif
+        env:
+          TAG: ${{ needs.images.outputs.tag }}
+        run: |
+          {
+            echo "### Deploiement demande"
+            echo ""
+            echo "Tag epingle dans le depot platform : \`${TAG}\`"
+            echo ""
+            echo "Argo CD applique l'ecart sous 3 minutes environ."
           } >> "$GITHUB_STEP_SUMMARY"
