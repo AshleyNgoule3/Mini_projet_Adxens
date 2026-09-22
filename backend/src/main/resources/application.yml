@@ -23,3 +23,20 @@ management:
 app:
   cors:
     origin: ${APP_CORS_ORIGIN:http://localhost:5173}
+  features:
+    # Valeur retenue quand Unleash est injoignable ou desactive.
+    # true en local pour travailler confortablement ; passee a false en
+    # production, ou l'absence de reponse doit fermer l'acces plutot que
+    # de reactiver silencieusement des actions desactivees.
+    default-enabled: ${FEATURES_DEFAULT_ENABLED:true}
+
+unleash:
+  # Desactive par defaut : l'application demarre donc sans serveur Unleash,
+  # ce qui est indispensable pour le developpement local et les tests.
+  enabled: ${UNLEASH_ENABLED:false}
+  # Attention au /unleash : le serveur est configure avec BASE_URI_PATH,
+  # son API se trouve donc sous ce prefixe, y compris a l'interieur du cluster.
+  api-url: ${UNLEASH_API_URL:http://unleash.unleash.svc.cluster.local:4242/unleash/api/}
+  api-token: ${UNLEASH_API_TOKEN:}
+  app-name: gestion-employes
+

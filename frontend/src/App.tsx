@@ -7,6 +7,7 @@ import { EmployeeFormModal } from './components/EmployeeFormModal'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { useEmployees } from './hooks/useEmployees'
 import { useDepartments } from './hooks/useDepartments'
+import { useFeatures } from './hooks/useFeatures'
 import { deleteEmployee } from './api/employees'
 import { ApiRequestError } from './api/client'
 import type { Employee } from './types/employee'
@@ -35,6 +36,7 @@ export default function App() {
   const [formState, setFormState] = useState<FormState>({ isOpen: false, employee: null })
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const features = useFeatures()
 
   function openCreateForm() {
     setFormState({ isOpen: true, employee: null })
@@ -94,6 +96,7 @@ export default function App() {
             onSort={toggleSort}
             onEdit={openEditForm}
             onDelete={openDeleteConfirm}
+            ecritureActivee={features.ecritureActivee}
           />
           <Pagination page={page} totalPages={data.totalPages} onPageChange={setPage} />
         </>
