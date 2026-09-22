@@ -30,6 +30,12 @@ services:
       # Profil local : charge le jeu de donnees de demonstration.
       # Laisser vide pour reproduire le comportement d'un deploiement reel.
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      # Feature flags : en local, aucun serveur Unleash n'est lance. Les flags
+      # retombent donc sur cette valeur, ce qui permet de tester les deux cas
+      # sans infrastructure :
+      #   docker compose up -d                                 -> actions visibles
+      #   FEATURES_DEFAULT_ENABLED=false docker compose up -d  -> actions masquees
+      FEATURES_DEFAULT_ENABLED: ${FEATURES_DEFAULT_ENABLED:-true}
       # Nom de service et port interne : inchanges par le remappage ci-dessus.
       DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-gestion_employes}
       DB_USERNAME: ${POSTGRES_USER:-gestion_employes}

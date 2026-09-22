@@ -60,6 +60,12 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.getunleash</groupId>
+            <artifactId>unleash-client-java</artifactId>
+            <version>9.3.2</version>
+        </dependency>
+
     </dependencies>
 
     <build>

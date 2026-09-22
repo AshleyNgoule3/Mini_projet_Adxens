@@ -29,6 +29,13 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI()));
     }
 
+    @ExceptionHandler(FeatureDisabledException.class)
+    public ResponseEntity<ApiError> handleFeatureDisabled(FeatureDisabledException ex,
+                                                          HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiError.of(HttpStatus.FORBIDDEN, ex.getMessage(), request.getRequestURI()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<ValidationErrorDetail> details = ex.getBindingResult().getFieldErrors().stream()
