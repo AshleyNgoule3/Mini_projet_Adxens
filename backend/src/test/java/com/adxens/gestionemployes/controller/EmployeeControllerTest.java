@@ -6,7 +6,9 @@ import com.adxens.gestionemployes.entity.EmployeeStatus;
 import com.adxens.gestionemployes.exception.EmployeeNotFoundException;
 import com.adxens.gestionemployes.mapper.EmployeeMapper;
 import com.adxens.gestionemployes.service.EmployeeService;
+import com.adxens.gestionemployes.service.FeatureService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -43,6 +45,20 @@ class EmployeeControllerTest {
 
     @MockBean
     private EmployeeService employeeService;
+
+    // EmployeeController depend de FeatureService depuis l'introduction du
+    // feature flag. @WebMvcTest ne charge que la couche web : sans ce mock,
+    // le contexte Spring ne demarre pas et TOUS les tests echouent.
+    @MockBean
+    private FeatureService featureService;
+
+    @BeforeEach
+    void activerLesActionsDEcriture() {
+        // Par defaut Mockito rend false, ce qui ferait repondre 403 aux tests
+        // de suppression. On ouvre donc le flag pour les cas nominaux ; le cas
+        // ferme est couvert par son propre test plus bas.
+        when(featureService.isEnabled(FeatureService.ACTIONS_ECRITURE)).thenReturn(true);
+    }
 
     private Employee sampleEmployee() {
         return new Employee("Marie", "Dubois", "Developpeuse", "IT",
@@ -107,6 +123,15 @@ class EmployeeControllerTest {
     void delete_existing_returns204() throws Exception {
         mockMvc.perform(delete("/api/employees/1"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void delete_flagFerme_returns403() throws Exception {
+        when(featureService.isEnabled(FeatureService.ACTIONS_ECRITURE)).thenReturn(false);
+
+        mockMvc.perform(delete("/api/employees/1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
     }
 
     @Test
